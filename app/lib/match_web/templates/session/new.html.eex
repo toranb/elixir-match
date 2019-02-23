@@ -1,0 +1,37 @@
+<div class="index-container">
+  <div class="index">
+    <div class="logo">
+      <img src="<%= Routes.static_path(@conn, "/images/elixir.png") %>"/>
+    </div>
+    <div class="options flex">
+      <div class="login-container">
+        <div class="login-page">
+          <div class="intro-header-login">
+            <h1>Elixir Match</h1>
+          </div>
+          <div class="form">
+            <%= form_for @conn, Routes.registration_path(@conn, :create), [class: 'optional-form', autocomplete: "off", autocorrect: "off", autocapitalize: "off"], fn f -> %>
+              <%= text_input f, :username, [placeholder: "username"] %>
+              <%= text_input f, :invite, [placeholder: "invite code"] %>
+              <%= password_input f, :password, [placeholder: "password"] %>
+              <%= submit "Sign Up" %>
+              <p class="message">Already registered? <a href="javascript:void(0)">Sign In</a></p>
+            <% end %>
+            <%= form_for @conn, Routes.session_path(@conn, :create), [class: 'required-form', autocomplete: "off", autocorrect: "off", autocapitalize: "off"], fn f -> %>
+              <p><%= text_input f, :username, [placeholder: "username"] %></p>
+              <p><%= password_input f, :password, [placeholder: "password"] %></p>
+              <p><%= submit "Sign In" %></p>
+              <p class="message">Not registered? <a href="javascript:void(0)">Sign Up</a></p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script type="text/javascript">
+  $('.message a').click(function() {
+     $('form').animate({height: 'toggle', opacity: 'toggle'}, 'slow');
+  });
+</script>

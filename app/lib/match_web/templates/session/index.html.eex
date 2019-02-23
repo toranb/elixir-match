@@ -1,0 +1,23 @@
+<div class="index-container">
+  <div class="index">
+    <div class="logo">
+      <img src="<%= Routes.static_path(@conn, "/images/elixir.png") %>"/>
+    </div>
+    <div class="options">
+      <div class="intro-container">
+        <div class="intro-header">
+          <h1>Elixir Match</h1>
+        </div>
+        <div class="intro-text">
+          <p>When my son was younger, we would play match for hours. I always thought that creating a digital version of the game would make for a great hobby project. As I journeyed into Elixir last year, I was able to bring this idea to life when I decided a multiplayer game for the iPad would be the perfect opportunity to learn about concurrency.</p>
+        </div>
+        <div class="links-container links-intro-padding">
+          <div class="links">
+            <%= link "Login", class: 'action-button animate margin-right green', to: Routes.session_path(@conn, :new) %>
+            <%= link "Sign up", class: 'action-button animate purple', to: Routes.registration_path(@conn, :new) %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

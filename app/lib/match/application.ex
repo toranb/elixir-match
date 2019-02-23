@@ -8,12 +8,10 @@ defmodule Match.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      # Start the Ecto repository
       Match.Repo,
-      # Start the endpoint when the application starts
-      MatchWeb.Endpoint
-      # Starts a worker by calling: Match.Worker.start_link(arg)
-      # {Match.Worker, arg},
+      MatchWeb.Endpoint,
+      {Registry, keys: :unique, name: Match.Registry},
+      Match.Logon
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

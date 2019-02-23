@@ -1,7 +1,7 @@
 defmodule MatchWeb.PageController do
   use MatchWeb, :controller
 
-  def index(conn, _params) do
-    render(conn, "index.html")
+  def new(conn, %{"visibility" => visibility}) do
+    render(conn, "new.html")
   end
 end
