@@ -24,7 +24,7 @@ defmodule MatchWeb.AuthenticatorTest do
     assert Map.get(authenticated.assigns, :current_user) == nil
 
     authorized = get(authenticated, Routes.page_path(conn, :new, %{visibility: "public"}))
-    # assert String.match?(html_response(authorized, 302), ~r/.*You are being \<a href=\"\/game\/.*/)
+    assert String.match?(html_response(authorized, 302), ~r/.*You are being \<a href=\"\/game\/.*/)
     assert Map.get(authorized.assigns, :current_user) != nil
     %{id: id, username: username, icon: icon} = Map.get(authorized.assigns, :current_user)
     assert id == "A4E3400CF711E76BBD86C57CA"

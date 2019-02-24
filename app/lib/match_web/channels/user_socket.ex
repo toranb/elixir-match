@@ -2,7 +2,8 @@ defmodule MatchWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  # channel "room:*", MatchWeb.RoomChannel
+  channel "games:*", MatchWeb.GameChannel
+  channel "available", MatchWeb.AvailableChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After
@@ -15,6 +16,16 @@ defmodule MatchWeb.UserSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
+
+  def connect(%{"token" => token}, socket, _connect_info) do
+    case Phoenix.Token.verify(socket, "player_auth", token, max_age: 86400) do
+      {:ok, current_user} ->
+        {:ok, assign(socket, :current_user, current_user)}
+      {:error, _reason} ->
+        :error
+    end
+  end
+
   def connect(_params, socket, _connect_info) do
     {:ok, socket}
   end

@@ -4,20 +4,141 @@
       <img src="<%= Routes.static_path(@conn, "/images/elixir.png") %>"/>
     </div>
     <div class="options">
-      <div class="intro-container">
-        <div class="intro-header">
-          <h1>Elixir Match</h1>
+      <%= if @auth_token != nil do %>
+        <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/phoenix.js") %>"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+        <div class="twenty-more start-join-container">
+          <h1>Start new game</h1>
         </div>
-        <div class="intro-text">
-          <p>When my son was younger, we would play match for hours. I always thought that creating a digital version of the game would make for a great hobby project. As I journeyed into Elixir last year, I was able to bring this idea to life when I decided a multiplayer game for the iPad would be the perfect opportunity to learn about concurrency.</p>
-        </div>
-        <div class="links-container links-intro-padding">
+
+        <div class="links-container">
           <div class="links">
-            <%= link "Login", class: 'action-button animate margin-right green', to: Routes.session_path(@conn, :new) %>
-            <%= link "Sign up", class: 'action-button animate purple', to: Routes.registration_path(@conn, :new) %>
+            <%= link "Public", class: 'public icon-padding action-button animate margin-right green', to: Routes.page_path(@conn, :new, [visibility: :public]) %>
+            <%= link "Private", class: 'private icon-padding action-button animate purple', to: Routes.page_path(@conn, :new, [visibility: :private]) %>
           </div>
         </div>
-      </div>
+
+        <div class="ten-more start-join-container">
+          <h1>Join public game</h1>
+        </div>
+
+        <div class="games-container">
+          <div id="games" class="games">
+            <div class="filter-container">
+              <form class="filter-form" onsubmit="return false;">
+                <input class="filter-games" placeholder="Search for a username" type="text" v-model="searchText">
+                <input style="display: none" value="submit" type="submit">
+              </form>
+            </div>
+            <div class="available" :style="{ overflowY: available.length > 6 ? 'scroll' : 'hidden'}">
+              <ul class="games-list" v-if="available.length">
+                <li v-for="game in available" :class="game.icon">
+                  <span class="available-container">
+                    <span class="title">
+                      <span class="username">{{game.username}}</span>
+                      <span class="created">{{game.createdDate}}</span>
+                    </span>
+                    <span class="play-icon">
+                      <a class="play action-button animate green" :href="'/game/' + game.name"></a>
+                    </span>
+                  </span>
+                </li>
+              </ul>
+              <ul v-else class="games-list">
+                <li class="no-games"><span class="nada">No Available Games</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <span style="display: none;" id="authToken"><%= @auth_token %></span>
+        <script type="text/javascript">
+          const times = [["second", 1], ["minute", 60], ["hour", 3600], ["day", 86400], ["week", 604800], ["month", 2592000], ["year", 31536000]];
+          function timeAgo(date) {
+            const now = new Date();
+            let diff = Math.round((now - date) / 1000);
+            for (let t = 0; t < times.length; t++) {
+              if (diff < times[t][1]) {
+                if (t == 0) {
+                  return 'Just now';
+                } else {
+                  diff = Math.round(diff / times[t - 1][1]);
+                  return diff + ' ' + times[t - 1][0] + (diff == 1 ? ' ago' : 's ago');
+                }
+              }
+            }
+          };
+          const store = {
+            state: {
+              games: []
+            },
+            setGames(games) {
+              this.state.games = games.map((game) => {
+                const created = new Date(game.created);
+                const createdDate = timeAgo(created);
+                return {
+                  ...game,
+                  created,
+                  createdDate
+                }
+              }).sort((a, b) => {
+                return b.created - a.created;
+              });
+            }
+          };
+
+          new Vue({
+            el: '#games',
+            data() {
+              return {
+                searchText: '',
+                state: store.state
+              }
+            },
+            computed: {
+              available: function() {
+                const text = this.searchText;
+                const games = this.state.games || [];
+                if (text) {
+                  return games.filter((game) => game.username.indexOf(text) > -1);
+                }
+                return games;
+              }
+            }
+          });
+
+          const authToken = document.getElementById('authToken').textContent;
+
+          const socket = new Phoenix.Socket('/socket', {
+            params: { token: authToken }
+          });
+          socket.connect();
+
+          const channel = socket.channel('available', {});
+
+          channel.on('public_games', (state) => {
+            store.setGames(state.games);
+          });
+
+          channel.join().receive('ok', () => console.log('---'));
+        </script>
+      <% else %>
+        <div class="intro-container">
+          <div class="intro-header">
+            <h1>Elixir Match</h1>
+          </div>
+          <div class="intro-text">
+            <p>When my son was younger, we would play the memory card game for hours. I always thought that creating a digital version of the game would make for a great hobby project. As I journeyed into Elixir last year, I was able to bring this idea to life when I decided a multiplayer game for the iPad would be the perfect opportunity to learn about concurrency.</p>
+          </div>
+          <div class="links-container links-intro-padding">
+            <div class="links">
+              <%= link "Login", class: 'action-button animate margin-right green', to: Routes.session_path(@conn, :new) %>
+              <%= link "Sign up", class: 'action-button animate purple', to: Routes.registration_path(@conn, :new) %>
+            </div>
+          </div>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>

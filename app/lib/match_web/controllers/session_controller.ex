@@ -8,7 +8,8 @@ defmodule MatchWeb.SessionController do
   end
 
   def index(conn, _params) do
-    render(conn, "index.html")
+    auth_token = get_auth_token(conn)
+    render(conn, "index.html", %{auth_token: auth_token})
   end
 
   def redirected(conn, %{"reason" => reason}) do

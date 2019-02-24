@@ -41,14 +41,12 @@ body {
 }
 
 .public {
-  background-image: url("/images/public.png");
   background-size: 35px;
   background-position: left;
   background-repeat: no-repeat;
 }
 
 .private {
-  background-image: url("/images/private.png");
   background-size: 35px;
   background-position: left;
   background-repeat: no-repeat;

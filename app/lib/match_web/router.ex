@@ -60,6 +60,7 @@ defmodule MatchWeb.Router do
     pipe_through :restricted
 
     get "/", PageController, :new
+    get "/:id", PageController, :show
   end
 
 end

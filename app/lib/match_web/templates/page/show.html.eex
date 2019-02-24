@@ -1,0 +1,198 @@
+<style>
+  html {
+    background: rgb(147,209,245);
+  }
+</style>
+<script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/phoenix.js") %>"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<div id="card-game" class="card-game">
+  <div class="sticky-header">
+    <header class="header header-game">
+      <span class="label">active player: </span><span>{{activePlayer.username}}</span>
+      <span class="label score">score: </span><span>{{activePlayer.score}}</span>
+    </header>
+  </div>
+
+  <div class="game-container">
+    <div class="game">
+      <div class="cards">
+        <div class="card" v-for="card in state.cards" :class="{ flipped: card.flipped, found: card.paired }" @click="flipCard(card)">
+          <div class="back"></div>
+          <div class="front" :style="{ backgroundImage: 'url(' + card.image + ')' }"></div>
+        </div>
+      </div>
+      <div class="splash" v-if="state.showSplash">
+        <div class="overlay"></div>
+        <div class="content" :style="{ display: state.winnerId ? 'block' : 'none'}">
+          <h1>{{winner}}</h1>
+
+          <h2>Want more action?</h2>
+
+          <a class="icon-padding action-button animate margin-right green" href="javascript:void(0)" @click="restart()">Play Again</a>
+          <%= link "Home", class: 'icon-padding action-button animate purple', to: Routes.session_path(@conn, :index) %>
+        </div>
+        <div class="content" :style="{ display: !state.winnerId ? 'block' : 'none'}">
+          <div class="joined">
+            <h1>{{text}}</h1>
+          </div>
+          <a class="icon-padding action-button animate purple" href="javascript:void(0)" @click="hideSplash()">Continue</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display: none;" id="gameName"><%= @game_name %></div>
+<div style="display: none;" id="authToken"><%= @auth_token %></div>
+
+<script type="text/javascript">
+  const store = {
+    state: {
+      cards: [],
+      players: [],
+      scores: {},
+      winnerId: '',
+      showSplash: false,
+      activePlayer: null,
+      joinedPlayer: null,
+      errorMessage: null
+    },
+    setActivePlayer(player_id) {
+      this.state.activePlayer = player_id;
+    },
+    setPlayers(players) {
+      const activePlayerIds = this.state.players.map((p) => p.id);
+      const newPlayer = players.find((a) => {
+        return !activePlayerIds.includes(a.id);
+      });
+      if (activePlayerIds.length > 0 && newPlayer) {
+        this.state.showSplash = true;
+        this.state.joinedPlayer = newPlayer.username;
+      }
+      this.state.players = players;
+    },
+    setScores(scores) {
+      this.state.scores = scores;
+    },
+    setCards(cards) {
+      this.state.cards = cards;
+    },
+    setErrorMessage(message) {
+      this.state.errorMessage = message;
+    },
+    setSplash(show, winnerId) {
+      this.state.showSplash = show;
+      this.state.winnerId = winnerId;
+      if (show && winnerId !== null) {
+        store.setCards(this.state.cards.map((card) => {
+          return {
+            ...card,
+            paired: false
+          }
+        }));
+      }
+    }
+  };
+
+  new Vue({
+    el: '#card-game',
+    data() {
+      return {
+        state: store.state
+      }
+    },
+    computed: {
+      text: function() {
+        const errorMessage = this.state.errorMessage;
+        const joinedPlayer = this.state.joinedPlayer;
+        return errorMessage ? errorMessage : `${joinedPlayer} joined!`;
+      },
+      winner: function() {
+        const winnerId = this.state.winnerId;
+        if (winnerId) {
+          const player = this.players.find((player) => {
+            return player.id === winnerId;
+          });
+          const tinyId = winnerId && winnerId.substring(0, 6) || '';
+          return player ? `${player.username} won!` : `${tinyId} won!`;
+        }
+        return 'This game has expired';
+      },
+      activePlayer: function() {
+        const activePlayerId = this.state.activePlayer || 0;
+        const player = this.players.find((player) => {
+          return player.id === activePlayerId;
+        });
+        return player ? player : {username: activePlayerId, score: 'unknown'};
+      },
+      players: function () {
+        const scores = this.state.scores || {};
+        return this.state.players.map((player) => {
+          const score = scores[player.id] || 0;
+          return {
+            ...player,
+            score: score
+          }
+        });
+      }
+    },
+    methods: {
+      hideSplash() {
+        store.setSplash(false, null);
+        store.setErrorMessage(null);
+      },
+      restart() {
+        const activePlayer = this.activePlayer;
+        channel.push('restart', { winner: activePlayer });
+      },
+      flipCard(card) {
+        channel.push('flip_card', { id: card.id });
+      }
+    }
+  });
+
+  const authToken = document.getElementById('authToken').textContent;
+  const gameName = document.getElementById('gameName').textContent;
+
+  const socket = new Phoenix.Socket('/socket', {
+    params: { token: authToken }
+  });
+  socket.connect();
+
+  const channel = socket.channel('games:' + gameName, {});
+
+  channel.on('game_summary', (state) => {
+    store.setActivePlayer(state.active_player_id);
+    store.setCards(state.cards);
+    store.setScores(state.scores);
+    setTimeout(() => {
+      store.setSplash(state.winner !== null, state.winner);
+    }, 500);
+  });
+
+  channel.on('join_failed', (response) => {
+    const message = encodeURI(response.reason);
+    window.location = `/redirected?reason=${message}`;
+  });
+
+  channel.on('phx_reply', ({ response, status }) => {
+    if (status && status !== 'ok') {
+      const { reason } = response;
+      const message = reason || 'An error occurred';
+      store.setErrorMessage(message);
+      store.setSplash(true, null);
+    }
+  });
+
+  const presences = new Phoenix.Presence(channel);
+  presences.onSync(() => {
+    const players = Object.values(presences.state).map(({ metas }) => {
+      return metas[0];
+    });
+    store.setPlayers(players);
+  });
+
+  channel.join().receive('ok', () => console.log('---'));
+
+</script>

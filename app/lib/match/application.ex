@@ -6,22 +6,21 @@ defmodule Match.Application do
   use Application
 
   def start(_type, _args) do
-    # List all child processes to be supervised
     children = [
       Match.Repo,
       MatchWeb.Endpoint,
+      MatchWeb.Presence,
       {Registry, keys: :unique, name: Match.Registry},
+      Match.GameSupervisor,
       Match.Logon
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
+    :ets.new(:games_table, [:public, :named_table])
+
     opts = [strategy: :one_for_one, name: Match.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
   def config_change(changed, _new, removed) do
     MatchWeb.Endpoint.config_change(changed, removed)
     :ok
