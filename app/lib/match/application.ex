@@ -12,6 +12,7 @@ defmodule Match.Application do
       MatchWeb.Presence,
       {Registry, keys: :unique, name: Match.Registry},
       Match.GameSupervisor,
+      Match.Record,
       Match.Logon
     ]
 

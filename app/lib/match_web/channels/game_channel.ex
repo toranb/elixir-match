@@ -93,6 +93,10 @@ defmodule MatchWeb.GameChannel do
           send(self(), {:unflip, game_name})
         end
 
+        if winner != nil do
+          Match.Record.statistics(:record, scores, winner)
+        end
+
         {:noreply, socket}
       nil ->
         {:reply, {:error, %{reason: "Game does not exist"}}, socket}
