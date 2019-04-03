@@ -13,6 +13,13 @@ config :match, MatchWeb.Endpoint,
   check_origin: false,
   watchers: []
 
+config :match, MatchWeb.Endpoint,
+  live_reload: [
+    patterns: [
+      ~r{lib/match_web/live/.*(ex)$}
+    ]
+  ]
+
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed

@@ -1,6 +1,8 @@
 defmodule MatchWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :match
 
+  socket "/live", Phoenix.LiveView.Socket
+
   socket "/socket", MatchWeb.UserSocket,
     websocket: true,
     longpoll: false
