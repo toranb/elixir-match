@@ -40,6 +40,8 @@ cd app
 iex -S mix phx.server
 ```
 
+6) Use `elixir2019` as invite code in login screen.
+
 To run the app with docker
 
 1) install docker
