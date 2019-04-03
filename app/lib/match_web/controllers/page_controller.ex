@@ -18,12 +18,29 @@ defmodule MatchWeb.PageController do
   def show(conn, %{"id" => game_name}) do
     case Match.Session.session_pid(game_name) do
       pid when is_pid(pid) ->
-        render(conn, "show.html")
-      nil ->
-        conn
-          |> put_flash(:error, "game not found")
-          |> redirect(to: Routes.session_path(conn, :index))
+        current_user = Map.get(conn.assigns, :current_user)
+        case Match.Session.join(game_name, current_user.id) do
+          {:ok, _} -> render_live_view(conn, game_name, current_user)
+          {:error, _} -> redirect_user(conn)
+        end
+      nil -> redirect_user(conn)
     end
+  end
+
+  defp redirect_user(conn) do
+    conn
+      |> put_flash(:error, "game not found")
+      |> redirect(to: Routes.session_path(conn, :index))
+  end
+
+  defp render_live_view(conn, game_name, current_user) do
+    Phoenix.LiveView.Controller.live_render(conn, MatchWeb.GameLive, session: %{
+      game_name: game_name,
+      player_id: current_user.id,
+      username: current_user.username,
+      joined_id: nil,
+      error: nil
+    })
   end
 
 end
