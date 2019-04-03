@@ -1,13 +1,26 @@
 defmodule Match.Game do
   defstruct cards: [], winner: nil, animating: false, active_player_id: nil, players: [], scores: %{}
 
+  import Match.Random, only: [take_random: 2]
   import Match.Hash, only: [hmac: 3]
 
-  def new(size \\ 9) do
+  def new(size) do
     cards = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen"]
-      |> Enum.take_random(size)
+      |> take_random(size)
       |> generate_cards()
     %Match.Game{cards: cards}
+  end
+
+  def prepare_restart(old_game) do
+    %Match.Game{winner: winner, cards: cards} = old_game
+    case winner != nil do
+      true ->
+        unpaired =
+          cards
+          |> Enum.map(fn(card) -> %Match.Card{card | paired: false} end)
+        %{ old_game | cards: unpaired}
+      false -> old_game
+    end
   end
 
   def restart(old_game) do
@@ -161,7 +174,6 @@ defmodule Match.Game do
       [one, two]
     end)
     |> List.flatten()
-    |> Enum.take_random(total * 2)
+    |> take_random(total * 2)
   end
-
 end

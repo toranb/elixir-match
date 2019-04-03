@@ -282,7 +282,7 @@ defmodule Match.GameTest do
     assert player_two == "01D3CC"
   end
 
-  test "flipping the last match will mark the winner as truthy" do
+  test "flipping the last match will mark the winner as truthy and prepare restart will unflip/unpair each card" do
     state = %Match.Game{
       cards: [
         %Match.Card{:id => "24CEDF1", :name => "one", :image => "/images/cards/one.png", :flipped => false, :paired => true},
@@ -321,6 +321,70 @@ defmodule Match.GameTest do
 
     assert winner == "01D3CC"
     assert scores == %{"EBDA4E" => 1, "01D3CC" => 2}
+
+    prepare_state = Match.Game.prepare_restart(new_state)
+
+    %Match.Game{cards: cards, winner: winner, scores: scores} = prepare_state
+    [
+      %Match.Card{flipped: flip_one, paired: paired_one},
+      %Match.Card{flipped: flip_two, paired: paired_two},
+      %Match.Card{flipped: flip_three, paired: paired_three},
+      %Match.Card{flipped: flip_four, paired: paired_four},
+    ] = cards
+
+    assert flip_one == false
+    assert flip_two == false
+    assert flip_three == false
+    assert flip_four == false
+
+    assert paired_one == false
+    assert paired_two == false
+    assert paired_three == false
+    assert paired_four == false
+
+    assert winner == "01D3CC"
+    assert scores == %{"EBDA4E" => 1, "01D3CC" => 2}
+  end
+
+  test "prepare restart does nothing if winner is nil" do
+    state = %Match.Game{
+      cards: [
+        %Match.Card{:id => "24CEDF1", :name => "one", :image => "/images/cards/one.png", :flipped => false, :paired => true},
+        %Match.Card{:id => "3079821", :name => "two", :image => "/images/cards/two.png", :flipped => true, :paired => false},
+        %Match.Card{:id => "24CEDF2", :name => "one", :image => "/images/cards/one.png", :flipped => false, :paired => true},
+        %Match.Card{:id => "3079822", :name => "two", :image => "/images/cards/two.png", :flipped => false, :paired => false},
+      ],
+      winner: nil,
+      players: [
+        "EBDA4E",
+        "01D3CC"
+      ],
+      active_player_id: "01D3CC",
+      scores: %{"EBDA4E" => 1, "01D3CC" => 1}
+    }
+
+    new_state = Match.Game.prepare_restart(state)
+
+    %Match.Game{cards: cards, winner: winner, scores: scores} = new_state
+    [
+      %Match.Card{flipped: flip_one, paired: paired_one},
+      %Match.Card{flipped: flip_two, paired: paired_two},
+      %Match.Card{flipped: flip_three, paired: paired_three},
+      %Match.Card{flipped: flip_four, paired: paired_four},
+    ] = cards
+
+    assert flip_one == false
+    assert flip_two == true
+    assert flip_three == false
+    assert flip_four == false
+
+    assert paired_one == true
+    assert paired_two == false
+    assert paired_three == true
+    assert paired_four == false
+
+    assert winner == nil
+    assert scores == %{"EBDA4E" => 1, "01D3CC" => 1}
   end
 
   test "flipping will append score when user id already in the scores map" do

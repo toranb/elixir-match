@@ -3,15 +3,17 @@ defmodule Match.Session do
 
   @timeout :timer.minutes(60)
 
-  def start_link(name, user, scope) do
-    GenServer.start_link(__MODULE__, {:ok, name, user, scope}, name: via(name))
+  import Match.Process, only: [sleep: 1]
+
+  def start_link(name, user, scope, size) do
+    GenServer.start_link(__MODULE__, {:ok, name, user, scope, size}, name: via(name))
   end
 
   defp via(name), do: Match.Registry.via(name)
 
   @impl GenServer
-  def init({:ok, name, user, scope}) do
-    state = Match.Game.new()
+  def init({:ok, name, user, scope, size}) do
+    state = Match.Game.new(size)
     send(self(), {:available, name, user, scope})
     {:ok, state, @timeout}
   end
@@ -20,6 +22,10 @@ defmodule Match.Session do
     name
       |> via()
       |> GenServer.whereis()
+  end
+
+  def game_state(name) do
+    GenServer.call(via(name), {:game_state})
   end
 
   def join(name, player_id) do
@@ -35,12 +41,22 @@ defmodule Match.Session do
   end
 
   def unflip(name) do
-    Process.sleep(1000)
+    sleep(10)
     GenServer.call(via(name), {:unflip})
   end
 
+  def prepare_restart(name) do
+    GenServer.call(via(name), {:prepare_restart})
+  end
+
   def restart(name) do
+    sleep(1)
     GenServer.call(via(name), {:restart})
+  end
+
+  @impl GenServer
+  def handle_call({:game_state}, _from, state) do
+    {:reply, state, state, @timeout}
   end
 
   @impl GenServer
@@ -72,6 +88,12 @@ defmodule Match.Session do
   @impl GenServer
   def handle_call({:unflip}, _from, state) do
     new_state = Match.Game.unflip(state)
+    {:reply, new_state, new_state, @timeout}
+  end
+
+  @impl GenServer
+  def handle_call({:prepare_restart}, _from, state) do
+    new_state = Match.Game.prepare_restart(state)
     {:reply, new_state, new_state, @timeout}
   end
 

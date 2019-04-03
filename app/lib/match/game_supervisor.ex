@@ -9,10 +9,10 @@ defmodule Match.GameSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  def start_game(name, user, scope) do
+  def start_game(name, user, scope, size \\ 9) do
     child_spec = %{
       id: Match.Session,
-      start: {Match.Session, :start_link, [name, user, scope]},
+      start: {Match.Session, :start_link, [name, user, scope, size]},
       restart: :transient
     }
 
