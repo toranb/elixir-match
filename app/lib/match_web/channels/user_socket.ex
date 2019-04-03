@@ -2,7 +2,6 @@ defmodule MatchWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "games:*", MatchWeb.GameChannel
   channel "available", MatchWeb.AvailableChannel
 
   # Socket params are passed from the client and can

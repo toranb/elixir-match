@@ -18,18 +18,12 @@ defmodule MatchWeb.PageController do
   def show(conn, %{"id" => game_name}) do
     case Match.Session.session_pid(game_name) do
       pid when is_pid(pid) ->
-        auth_token = generate_auth_token(conn)
-        render(conn, "show.html", %{game_name: game_name, auth_token: auth_token})
+        render(conn, "show.html")
       nil ->
         conn
           |> put_flash(:error, "game not found")
           |> redirect(to: Routes.session_path(conn, :index))
     end
-  end
-
-  defp generate_auth_token(conn) do
-    current_user = Map.get(conn.assigns, :current_user)
-    Phoenix.Token.sign(conn, "player_auth", current_user)
   end
 
 end
