@@ -44,6 +44,7 @@ defmodule Match.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:bcrypt_elixir, "~> 1.1"},
+      {:floki, "~> 0.20.0"},
       {:phoenix_live_view, github: "phoenixframework/phoenix_live_view"},
       {:mix_test_watch, "~> 0.8", only: :dev, runtime: false}
     ]
